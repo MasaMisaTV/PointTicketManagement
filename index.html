@@ -22,6 +22,11 @@
       margin-bottom: 10px;
       text-align: center;
     }
+    #currentDate {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
     button {
       font-weight: bold;
       background-color: #444;
@@ -73,7 +78,7 @@
 </head>
 <body>
   <h1>ポイかん</h1>
-  <p id="todayDate" style="text-align: center; font-weight: bold;">📅 今日の日付: </p>
+  <div id="currentDate"></div>
   <button id="settingsBtn" onclick="toggleSettings(true)">設定</button>
   <div id="settingsPanel">
     <div id="settingsContent">
@@ -114,6 +119,12 @@
     <tbody id="historyList"></tbody>
   </table>
 <script>
+  function getTodayJST() {
+    const now = new Date();
+    now.setHours(now.getHours() + 9);
+    return now.toISOString().split("T")[0];
+  }
+
   let ticketCount = 0;
   let history = [];
 
@@ -140,9 +151,9 @@
   }
 
   window.onload = function () {
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = getTodayJST();
     document.getElementById("manualDate").setAttribute("max", todayStr);
-    document.getElementById("todayDate").textContent = `📅 今日の日付: ${todayStr}`;
+    document.getElementById("currentDate").textContent = `今日の日付: ${todayStr}`;
 
     const storedCount = localStorage.getItem("ticketCount");
     const storedHistory = localStorage.getItem("ticketHistory");
@@ -159,7 +170,7 @@
       alert("使用または追加ポイント券枚数を入力してください");
       return;
     }
-    const now = new Date().toISOString().split("T")[0];
+    const now = getTodayJST();
     const idx = history.findIndex(e => e.time === now);
     const entry = { time: now, used, added };
     if (idx !== -1) history[idx] = entry;
@@ -173,7 +184,7 @@
       alert("日付を選んでください");
       return;
     }
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayJST();
     if (time > today) {
       alert("今日より後の日付は選べません");
       return;
