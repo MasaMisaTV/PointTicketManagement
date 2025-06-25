@@ -153,6 +153,15 @@
 
   function addManualEntry() {
     const time = document.getElementById("manualDate").value;
+    const today = new Date().toISOString().split("T")[0];
+    if (!time) {
+      alert("日付を選んでください");
+      return;
+    }
+    if (time > today) {
+      alert("未来の日付は選べません");
+      return;
+    }
     const used = parseInt(document.getElementById("manualUsedTickets").value) || 0;
     const added = parseInt(document.getElementById("manualAddedTickets").value) || 0;
     if (!time) {
