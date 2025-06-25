@@ -10,16 +10,19 @@
     button { font-weight: bold; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+
     #settingsBtn {
       position: fixed;
-      top: 10px;
-      right: 10px;
-      font-size: 16px;
-      padding: 8px 10px;
-      background-color: #eee;
-      border: 1px solid #aaa;
+      top: 6px;
+      right: 6px;
+      font-size: 14px;
+      padding: 4px 6px;
+      background-color: transparent;
+      border: none;
       z-index: 1000;
+      cursor: pointer;
     }
+
     #settingsPanel {
       display: none;
       position: fixed;
@@ -32,27 +35,26 @@
       z-index: 999;
       overflow-y: auto;
     }
-   #settingsBtn {
-  position: fixed;
-  top: 6px;
-  right: 6px;
-  font-size: 14px;
-  padding: 4px 6px;
-  background-color: transparent;
-  border: none;
-  z-index: 1000;
-  cursor: pointer;
-}
 
-
+    #closeSettingsBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      font-size: 16px;
+      padding: 8px 10px;
+      background-color: #ddd;
+      border: 1px solid #999;
+      z-index: 1001;
+    }
   </style>
 </head>
 <body>
   <h2>📊 ポイント管理サイト</h2>
-  <button id="settingsBtn" onclick="toggleSettings(true)">⚙️設定</button>
+  <button id="settingsBtn" onclick="toggleSettings(true)">⚙️</button>
 
   <div>
-    <strong>現在のポイント券枚数:</strong> <span id="ticketCount">0</span>
+    <strong>現在のポイント券枚数:</strong> <span id="ticketCount">0</span><br>
+    <strong>合計ポイント:</strong> <span id="totalPoints">0</span> pt
   </div>
 
   <label>使用ポイント:</label>
@@ -92,8 +94,8 @@
     <button onclick="addManualEntry()">➕ 履歴を追加</button>
 
     <hr>
-    <label>🗑 削除する日付を入力（完全一致）:</label>
-    <input type="text" id="deleteDate" placeholder="例：2025-06-25">
+    <label>🗑 削除する日付を入力（例：2025-06-25）:</label>
+    <input type="text" id="deleteDate">
 
     <button onclick="deleteEntry()">❌ 履歴を削除</button>
 
@@ -105,18 +107,23 @@
     let ticketCount = 0;
     let history = [];
 
+    function updateDisplay() {
+      document.getElementById("ticketCount").textContent = ticketCount;
+      document.getElementById("totalPoints").textContent = ticketCount * 5;
+    }
+
     window.onload = function () {
       const storedCount = localStorage.getItem("ticketCount");
       const storedHistory = localStorage.getItem("ticketHistory");
 
       if (storedCount !== null) {
         ticketCount = parseInt(storedCount);
-        document.getElementById("ticketCount").textContent = ticketCount;
       }
       if (storedHistory !== null) {
         history = JSON.parse(storedHistory);
         refreshHistory();
       }
+      updateDisplay();
     };
 
     function updateTickets() {
@@ -133,7 +140,6 @@
         return;
       }
       ticketCount += change;
-      document.getElementById("ticketCount").textContent = ticketCount;
 
       const now = new Date().toISOString().split("T")[0];
       const existingIndex = history.findIndex(e => e.time === now);
@@ -166,7 +172,6 @@
         return;
       }
       ticketCount = newTotal;
-      document.getElementById("ticketCount").textContent = ticketCount;
 
       const existingIndex = history.findIndex(e => e.time === time);
       const entry = { time, used, added, total: ticketCount };
@@ -187,7 +192,6 @@
       }
       history.splice(index, 1);
       ticketCount = history.length > 0 ? history[0].total : 0;
-      document.getElementById("ticketCount").textContent = ticketCount;
       saveData();
     }
 
@@ -196,7 +200,7 @@
         ticketCount = 0;
         history = [];
         localStorage.clear();
-        document.getElementById("ticketCount").textContent = "0";
+        updateDisplay();
         refreshHistory();
       }
     }
@@ -219,6 +223,7 @@
     function saveData() {
       localStorage.setItem("ticketCount", ticketCount);
       localStorage.setItem("ticketHistory", JSON.stringify(history));
+      updateDisplay();
       refreshHistory();
     }
 
