@@ -122,13 +122,12 @@
       alert("使用または追加ポイント券枚数を入力してください");
       return;
     }
-    const net = added - used;
-    if (ticketCount + net < 0) {
-      alert("ポイント券が足りません");
-      return;
-    }
-    ticketCount += net;
     const now = new Date().toISOString().split("T")[0];
+    const idx = history.findIndex(e => e.time === now);
+    if (idx !== -1) {
+      const old = history[idx];
+      ticketCount -= old.added - old.used;
+    }
     const entry = { time: now, used, added, total: ticketCount };
     const idx = history.findIndex(e => e.time === now);
     if (idx !== -1) history[idx] = entry;
