@@ -106,6 +106,9 @@
     document.getElementById("totalPoints").textContent = ticketCount * 5;
   }
   window.onload = function () {
+    // 今日までの日付しか選べないように設定
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("manualDate").max = today;
     // 今日の日付をmaxに設定
     const todayStr = new Date().toISOString().split("T")[0];
     document.getElementById("manualDate").setAttribute("max", todayStr);
