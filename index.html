@@ -22,12 +22,6 @@
       margin-bottom: 10px;
       text-align: center;
     }
-    #currentDate {
-      text-align: center;
-      font-size: 14px;
-      margin-bottom: 20px;
-      color: #555;
-    }
     button {
       font-weight: bold;
       background-color: #444;
@@ -79,7 +73,7 @@
 </head>
 <body>
   <h1>ポイかん</h1>
-  <div id="currentDate"></div>
+  <p id="todayDate" style="text-align: center; font-weight: bold;">📅 今日の日付: </p>
   <button id="settingsBtn" onclick="toggleSettings(true)">設定</button>
   <div id="settingsPanel">
     <div id="settingsContent">
@@ -148,9 +142,7 @@
   window.onload = function () {
     const todayStr = new Date().toISOString().split("T")[0];
     document.getElementById("manualDate").setAttribute("max", todayStr);
-    document.getElementById("manualDate").value = todayStr;
-    document.getElementById("deleteDate").value = todayStr;
-    document.getElementById("currentDate").textContent = `📅 今日の日付: ${todayStr}`;
+    document.getElementById("todayDate").textContent = `📅 今日の日付: ${todayStr}`;
 
     const storedCount = localStorage.getItem("ticketCount");
     const storedHistory = localStorage.getItem("ticketHistory");
