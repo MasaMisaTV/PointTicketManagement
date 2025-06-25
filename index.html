@@ -4,23 +4,53 @@
   <meta charset="UTF-8" />
   <title>ポイント管理サイト</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 700px; margin: auto; position: relative; }
-    input, button, select { margin: 5px 0; padding: 6px; width: 100%; }
-    h2 { margin-bottom: 10px; }
-    button { font-weight: bold; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      position: relative; /* ← これで absolute なボタンが本文右上になる */
+    }
+
+    input, button, select {
+      margin: 5px 0;
+      padding: 6px;
+      width: 100%;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    button {
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
 
     #settingsBtn, #closeSettingsBtn {
-      position: fixed;
+      position: absolute;  /* ← fixed を absolute に変更 */
       top: 6px;
       right: 6px;
       font-size: 14px;
       padding: 4px 6px;
       background-color: transparent;
       border: none;
-      z-index: 1000;
       cursor: pointer;
+    }
+
+    #closeSettingsBtn {
+      display: none;
     }
 
     #settingsPanel {
@@ -40,6 +70,7 @@
 <body>
   <h2>📊 ポイント管理サイト</h2>
   <button id="settingsBtn" onclick="toggleSettings(true)">⚙️</button>
+  <button id="closeSettingsBtn" onclick="toggleSettings(false)">❌</button>
 
   <div>
     <strong>現在のポイント券枚数:</strong> <span id="ticketCount">0</span><br>
@@ -68,7 +99,6 @@
 
   <!-- 設定画面 -->
   <div id="settingsPanel">
-    <button id="closeSettingsBtn" onclick="toggleSettings(false)">❌</button>
     <h3>⚙️ 設定</h3>
 
     <label>📅 日付:</label>
@@ -87,9 +117,6 @@
     <input type="text" id="deleteDate">
 
     <button onclick="deleteEntry()">❌ 履歴を削除</button>
-
-    <hr>
-    <button onclick="resetData()" style="background-color: red; color: white;">リセット（全削除）</button>
   </div>
 
   <script>
@@ -184,16 +211,6 @@
       saveData();
     }
 
-    function resetData() {
-      if (confirm("すべての履歴とポイント券を削除しますか？")) {
-        ticketCount = 0;
-        history = [];
-        localStorage.clear();
-        updateDisplay();
-        refreshHistory();
-      }
-    }
-
     function refreshHistory() {
       const list = document.getElementById("historyList");
       list.innerHTML = "";
@@ -218,6 +235,8 @@
 
     function toggleSettings(show) {
       document.getElementById("settingsPanel").style.display = show ? "block" : "none";
+      document.getElementById("settingsBtn").style.display = show ? "none" : "inline-block";
+      document.getElementById("closeSettingsBtn").style.display = show ? "inline-block" : "none";
     }
   </script>
 </body>
