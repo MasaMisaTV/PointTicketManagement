@@ -67,7 +67,7 @@
     <button id="closeSettingsBtn" onclick="toggleSettings(false)">戻る</button>
     <h3>⚙️ 設定</h3>
     <label>📅 日付:</label>
-    <input type="date" id="manualDate" max="{{today}}">
+    <input type="date" id="manualDate">
     <label>使用ポイント券枚数:</label>
     <input type="number" id="manualUsedTickets" value="0">
     <label>追加ポイント券枚数:</label>
@@ -101,26 +101,41 @@
 <script>
   let ticketCount = 0;
   let history = [];
+
   function updateDisplay() {
     document.getElementById("ticketCount").textContent = ticketCount;
     document.getElementById("totalPoints").textContent = ticketCount * 5;
   }
+
+  function rebuildTicketCount() {
+    ticketCount = 0;
+    history.sort((a, b) => a.time.localeCompare(b.time));
+    history.forEach(entry => {
+      ticketCount += entry.added - entry.used;
+      entry.total = ticketCount;
+    });
+  }
+
+  function saveData() {
+    rebuildTicketCount();
+    localStorage.setItem("ticketCount", ticketCount);
+    localStorage.setItem("ticketHistory", JSON.stringify(history));
+    updateDisplay();
+    refreshHistory();
+  }
+
   window.onload = function () {
-    // 今日までの日付しか選べないように設定
-    const today = new Date().toISOString().split("T")[0];
-    document.getElementById("manualDate").max = today;
-    // 今日の日付をmaxに設定
     const todayStr = new Date().toISOString().split("T")[0];
     document.getElementById("manualDate").setAttribute("max", todayStr);
+
     const storedCount = localStorage.getItem("ticketCount");
     const storedHistory = localStorage.getItem("ticketHistory");
-    if (storedCount !== null) ticketCount = parseInt(storedCount);
     if (storedHistory !== null) {
       history = JSON.parse(storedHistory);
-      refreshHistory();
     }
-    updateDisplay();
+    saveData();
   };
+
   function updateTickets() {
     const used = parseInt(document.getElementById("usedTickets").value) || 0;
     const added = parseInt(document.getElementById("addedTickets").value) || 0;
@@ -130,21 +145,12 @@
     }
     const now = new Date().toISOString().split("T")[0];
     const idx = history.findIndex(e => e.time === now);
-    if (idx !== -1) {
-      const old = history[idx];
-      ticketCount -= old.added - old.used;
-    }
-    const net = added - used;
-    if (ticketCount + net < 0) {
-      alert("ポイント券が足りません");
-      return;
-    }
-    ticketCount += net;
-    const entry = { time: now, used, added, total: ticketCount };
+    const entry = { time: now, used, added };
     if (idx !== -1) history[idx] = entry;
-    else history.unshift(entry);
+    else history.push(entry);
     saveData();
   }
+
   function addManualEntry() {
     const time = document.getElementById("manualDate").value;
     const used = parseInt(document.getElementById("manualUsedTickets").value) || 0;
@@ -157,22 +163,13 @@
       alert("使用または追加ポイント券枚数を入力してください");
       return;
     }
-    const net = added - used;
     const idx = history.findIndex(e => e.time === time);
-    if (idx !== -1) {
-      const old = history[idx];
-      ticketCount -= old.added - old.used;
-    }
-    if (ticketCount + net < 0) {
-      alert("ポイント券がマイナスになります");
-      return;
-    }
-    ticketCount += net;
-    const entry = { time, used, added, total: ticketCount };
+    const entry = { time, used, added };
     if (idx !== -1) history[idx] = entry;
-    else history.unshift(entry);
+    else history.push(entry);
     saveData();
   }
+
   function deleteEntry() {
     const delTime = document.getElementById("deleteDate").value;
     const index = history.findIndex(e => e.time === delTime);
@@ -181,28 +178,26 @@
       return;
     }
     history.splice(index, 1);
-    ticketCount = history.length > 0 ? history[0].total : 0;
     saveData();
   }
+
   function refreshHistory() {
     const list = document.getElementById("historyList");
     list.innerHTML = "";
-    history.forEach(entry => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${entry.time}</td>
-        <td>${entry.used}</td>
-        <td>${entry.added}</td>
-        <td>${entry.total}</td>`;
-      list.appendChild(row);
-    });
+    history
+      .slice()
+      .sort((a, b) => b.time.localeCompare(a.time))
+      .forEach(entry => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${entry.time}</td>
+          <td>${entry.used}</td>
+          <td>${entry.added}</td>
+          <td>${entry.total}</td>`;
+        list.appendChild(row);
+      });
   }
-  function saveData() {
-    localStorage.setItem("ticketCount", ticketCount);
-    localStorage.setItem("ticketHistory", JSON.stringify(history));
-    updateDisplay();
-    refreshHistory();
-  }
+
   function toggleSettings(show) {
     document.getElementById("settingsPanel").style.display = show ? "block" : "none";
     document.getElementById("settingsBtn").style.display = show ? "none" : "inline-block";
