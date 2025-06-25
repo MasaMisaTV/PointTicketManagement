@@ -11,46 +11,41 @@
       margin: auto;
       position: relative;
     }
-
     input, button, select {
       margin: 5px 0;
       padding: 6px;
       width: 100%;
     }
-
     h2 {
       margin-bottom: 10px;
     }
-
     button {
       font-weight: bold;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
-
     th, td {
       border: 1px solid #ccc;
       padding: 6px;
       text-align: center;
     }
-
-#settingsBtn, #closeSettingsBtn {
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 14px;
-  padding: 4px 6px;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-
+    #settingsBtn, #closeSettingsBtn {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      padding: 4px 6px;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    #closeSettingsBtn {
+      display: none;
+    }
     #settingsPanel {
       display: none;
       position: fixed;
@@ -67,183 +62,139 @@
 </head>
 <body>
   <h2>📊 ポイント管理サイト</h2>
-
-  <!-- 設定ボタン（初期表示） -->
-  <button id="settingsBtn" onclick="toggleSettings(true)">⚙️</button>
-
-  <!-- 設定画面 -->
+  <button id="settingsBtn" onclick="toggleSettings(true)">設定</button>
   <div id="settingsPanel">
-    <!-- バツボタン（設定開いてるときだけ表示） -->
-    <button id="closeSettingsBtn" onclick="toggleSettings(false)">❌</button>
-
+    <button id="closeSettingsBtn" onclick="toggleSettings(false)">戻る</button>
     <h3>⚙️ 設定</h3>
-
     <label>📅 日付:</label>
     <input type="date" id="manualDate">
-
-    <label>使用ポイント:</label>
-    <input type="number" id="manualUsed" value="0">
-
-    <label>追加ポイント:</label>
-    <input type="number" id="manualAdded" value="0">
-
+    <label>使用ポイント券枚数:</label>
+    <input type="number" id="manualUsedTickets" value="0">
+    <label>追加ポイント券枚数:</label>
+    <input type="number" id="manualAddedTickets" value="0">
     <button onclick="addManualEntry()">➕ 履歴を追加</button>
-
     <hr>
     <label>🗑 削除する日付を入力（例：2025-06-25）:</label>
     <input type="text" id="deleteDate">
-
     <button onclick="deleteEntry()">❌ 履歴を削除</button>
   </div>
-
   <div>
     <strong>現在のポイント券枚数:</strong> <span id="ticketCount">0</span><br>
     <strong>合計ポイント:</strong> <span id="totalPoints">0</span> pt
   </div>
-
-  <label>使用ポイント:</label>
-  <input type="number" id="usedPoints" value="0">
-
-  <label>追加ポイント:</label>
-  <input type="number" id="addedPoints" value="0">
-
+  <label>使用ポイント券枚数:</label>
+  <input type="number" id="usedTickets" value="0">
+  <label>追加ポイント券枚数:</label>
+  <input type="number" id="addedTickets" value="0">
   <button onclick="updateTickets()">ポイント更新</button>
-
   <table>
     <thead>
       <tr>
         <th>日付</th>
-        <th>使用</th>
-        <th>追加</th>
+        <th>使用券</th>
+        <th>追加券</th>
         <th>合計券</th>
       </tr>
     </thead>
     <tbody id="historyList"></tbody>
   </table>
-
-  <script>
-    let ticketCount = 0;
-    let history = [];
-
-    function updateDisplay() {
-      document.getElementById("ticketCount").textContent = ticketCount;
-      document.getElementById("totalPoints").textContent = ticketCount * 5;
-    }
-
-    window.onload = function () {
-      const storedCount = localStorage.getItem("ticketCount");
-      const storedHistory = localStorage.getItem("ticketHistory");
-
-      if (storedCount !== null) {
-        ticketCount = parseInt(storedCount);
-      }
-      if (storedHistory !== null) {
-        history = JSON.parse(storedHistory);
-        refreshHistory();
-      }
-      updateDisplay();
-    };
-
-    function updateTickets() {
-      const used = parseInt(document.getElementById("usedPoints").value) || 0;
-      const added = parseInt(document.getElementById("addedPoints").value) || 0;
-      if (used === 0 && added === 0) {
-        alert("使用ポイントまたは追加ポイントのどちらかを入力してください");
-        return;
-      }
-      const net = added - used;
-      const change = Math.floor(net / 5);
-      if (ticketCount + change < 0) {
-        alert("ポイント券が足りません");
-        return;
-      }
-      ticketCount += change;
-
-      const now = new Date().toISOString().split("T")[0];
-      const existingIndex = history.findIndex(e => e.time === now);
-      const entry = { time: now, used, added, total: ticketCount };
-      if (existingIndex !== -1) {
-        history[existingIndex] = entry;
-      } else {
-        history.unshift(entry);
-      }
-      saveData();
-    }
-
-    function addManualEntry() {
-      const time = document.getElementById("manualDate").value;
-      const used = parseInt(document.getElementById("manualUsed").value) || 0;
-      const added = parseInt(document.getElementById("manualAdded").value) || 0;
-      if (!time) {
-        alert("日付を選んでください");
-        return;
-      }
-      if (used === 0 && added === 0) {
-        alert("使用ポイントまたは追加ポイントのどちらかを入力してください");
-        return;
-      }
-      const net = added - used;
-      const change = Math.floor(net / 5);
-      const newTotal = ticketCount + change;
-      if (newTotal < 0) {
-        alert("ポイント券がマイナスになります！");
-        return;
-      }
-      ticketCount = newTotal;
-
-      const existingIndex = history.findIndex(e => e.time === time);
-      const entry = { time, used, added, total: ticketCount };
-      if (existingIndex !== -1) {
-        history[existingIndex] = entry;
-      } else {
-        history.unshift(entry);
-      }
-      saveData();
-    }
-
-    function deleteEntry() {
-      const delTime = document.getElementById("deleteDate").value;
-      const index = history.findIndex(e => e.time === delTime);
-      if (index === -1) {
-        alert("その日付の履歴が見つかりません。");
-        return;
-      }
-      history.splice(index, 1);
-      ticketCount = history.length > 0 ? history[0].total : 0;
-      saveData();
-    }
-
-    function refreshHistory() {
-      const list = document.getElementById("historyList");
-      list.innerHTML = "";
-      history.forEach(entry => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${entry.time}</td>
-          <td>${entry.used}</td>
-          <td>${entry.added}</td>
-          <td>${entry.total}</td>
-        `;
-        list.appendChild(row);
-      });
-    }
-
-    function saveData() {
-      localStorage.setItem("ticketCount", ticketCount);
-      localStorage.setItem("ticketHistory", JSON.stringify(history));
-      updateDisplay();
+<script>
+  let ticketCount = 0;
+  let history = [];
+  function updateDisplay() {
+    document.getElementById("ticketCount").textContent = ticketCount;
+    document.getElementById("totalPoints").textContent = ticketCount * 5;
+  }
+  window.onload = function () {
+    const storedCount = localStorage.getItem("ticketCount");
+    const storedHistory = localStorage.getItem("ticketHistory");
+    if (storedCount !== null) ticketCount = parseInt(storedCount);
+    if (storedHistory !== null) {
+      history = JSON.parse(storedHistory);
       refreshHistory();
     }
-
-    function toggleSettings(show) {
-      const settingsPanel = document.getElementById("settingsPanel");
-      const settingsBtn = document.getElementById("settingsBtn");
-      const closeSettingsBtn = document.getElementById("closeSettingsBtn");
-
-      settingsPanel.style.display = show ? "block" : "none";
-      settingsBtn.style.display = show ? "none" : "inline-block";
-      closeSettingsBtn.style.display = show ? "inline-block" : "none";
+    updateDisplay();
+  };
+  function updateTickets() {
+    const used = parseInt(document.getElementById("usedTickets").value) || 0;
+    const added = parseInt(document.getElementById("addedTickets").value) || 0;
+    if (used === 0 && added === 0) {
+      alert("使用または追加ポイント券枚数を入力してください");
+      return;
     }
-  </script>
+    const net = added - used;
+    if (ticketCount + net < 0) {
+      alert("ポイント券が足りません");
+      return;
+    }
+    ticketCount += net;
+    const now = new Date().toISOString().split("T")[0];
+    const entry = { time: now, used, added, total: ticketCount };
+    const idx = history.findIndex(e => e.time === now);
+    if (idx !== -1) history[idx] = entry;
+    else history.unshift(entry);
+    saveData();
+  }
+  function addManualEntry() {
+    const time = document.getElementById("manualDate").value;
+    const used = parseInt(document.getElementById("manualUsedTickets").value) || 0;
+    const added = parseInt(document.getElementById("manualAddedTickets").value) || 0;
+    if (!time) {
+      alert("日付を選んでください");
+      return;
+    }
+    if (used === 0 && added === 0) {
+      alert("使用または追加ポイント券枚数を入力してください");
+      return;
+    }
+    const net = added - used;
+    const newTotal = ticketCount + net;
+    if (newTotal < 0) {
+      alert("ポイント券がマイナスになります");
+      return;
+    }
+    ticketCount = newTotal;
+    const entry = { time, used, added, total: ticketCount };
+    const idx = history.findIndex(e => e.time === time);
+    if (idx !== -1) history[idx] = entry;
+    else history.unshift(entry);
+    saveData();
+  }
+  function deleteEntry() {
+    const delTime = document.getElementById("deleteDate").value;
+    const index = history.findIndex(e => e.time === delTime);
+    if (index === -1) {
+      alert("その日付の履歴が見つかりません。");
+      return;
+    }
+    history.splice(index, 1);
+    ticketCount = history.length > 0 ? history[0].total : 0;
+    saveData();
+  }
+  function refreshHistory() {
+    const list = document.getElementById("historyList");
+    list.innerHTML = "";
+    history.forEach(entry => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${entry.time}</td>
+        <td>${entry.used}</td>
+        <td>${entry.added}</td>
+        <td>${entry.total}</td>`;
+      list.appendChild(row);
+    });
+  }
+  function saveData() {
+    localStorage.setItem("ticketCount", ticketCount);
+    localStorage.setItem("ticketHistory", JSON.stringify(history));
+    updateDisplay();
+    refreshHistory();
+  }
+  function toggleSettings(show) {
+    document.getElementById("settingsPanel").style.display = show ? "block" : "none";
+    document.getElementById("settingsBtn").style.display = show ? "none" : "inline-block";
+    document.getElementById("closeSettingsBtn").style.display = show ? "inline-block" : "none";
+  }
+</script>
 </body>
 </html>
