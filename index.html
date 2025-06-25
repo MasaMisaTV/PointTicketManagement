@@ -67,7 +67,7 @@
     <button id="closeSettingsBtn" onclick="toggleSettings(false)">戻る</button>
     <h3>⚙️ 設定</h3>
     <label>📅 日付:</label>
-    <input type="date" id="manualDate">
+    <input type="date" id="manualDate" max="{{today}}">
     <label>使用ポイント券枚数:</label>
     <input type="number" id="manualUsedTickets" value="0">
     <label>追加ポイント券枚数:</label>
@@ -106,6 +106,9 @@
     document.getElementById("totalPoints").textContent = ticketCount * 5;
   }
   window.onload = function () {
+    // 今日の日付をmaxに設定
+    const todayStr = new Date().toISOString().split("T")[0];
+    document.getElementById("manualDate").setAttribute("max", todayStr);
     const storedCount = localStorage.getItem("ticketCount");
     const storedHistory = localStorage.getItem("ticketHistory");
     if (storedCount !== null) ticketCount = parseInt(storedCount);
