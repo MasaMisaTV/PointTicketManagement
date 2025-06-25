@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ポイント券管理（保存付き）</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { margin: 5px; }
+    .result, .history { margin-top: 15px; }
+    .history-item { border-bottom: 1px solid #ccc; padding: 5px 0; }
+  </style>
+</head>
+<body>
+  <h2>🎫 ポイント券管理</h2>
+
+  <label>現在のポイント券枚数: </label>
+  <span id="ticketCount">0</span><br>
+
+  <label>使用ポイント: </label>
+  <input type="number" id="usedPoints" value="0"><br>
+
+  <label>追加ポイント: </label>
+  <input type="number" id="addedPoints" value="0"><br>
+
+  <button onclick="updateTickets()">ポイント計算して保存</button>
+
+  <div class="result" id="resultMessage"></div>
+
+  <div class="history">
+    <h3>📜 履歴</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <script>
+    let ticketCount = 0;
+    let history = [];
+
+    window.onload = function () {
+      const storedCount = localStorage.getItem("ticketCount");
+      const storedHistory = localStorage.getItem("ticketHistory");
+
+      if (storedCount !== null) {
+        ticketCount = parseInt(storedCount);
+        document.getElementById("ticketCount").textContent = ticketCount;
+      }
+
+      if (storedHistory !== null) {
+        history = JSON.parse(storedHistory);
+        history.forEach(addHistoryItem);
+      }
+    };
+
+    function updateTickets() {
+      const used = parseInt(document.getElementById("usedPoints").value) || 0;
+      const added = parseInt(document.getElementById("addedPoints").value) || 0;
+
+      const netPoints = added - used;
+      const ticketChange = Math.floor(netPoints / 5);
+
+      if (ticketCount + ticketChange < 0) {
+        document.getElementById("resultMessage").textContent = "⚠️ ポイント券が足りません。";
+        return;
+      }
+
+      ticketCount += ticketChange;
+      document.getElementById("ticketCount").textContent = ticketCount;
+
+      const now = new Date().toLocaleString();
+      const sign = ticketChange >= 0 ? "+" : "";
+      const entry = `🕒 ${now}｜+${added}pt / -${used}pt → ${sign}${ticketChange}枚 → 残り ${ticketCount}枚`;
+
+      history.unshift(entry);
+      localStorage.setItem("ticketCount", ticketCount);
+      localStorage.setItem("ticketHistory", JSON.stringify(history));
+
+      document.getElementById("resultMessage").textContent = "✅ ポイント券を更新しました！";
+      refreshHistory();
+    }
+
+    function refreshHistory() {
+      const list = document.getElementById("historyList");
+      list.innerHTML = "";
+      history.forEach(addHistoryItem);
+    }
+
+    function addHistoryItem(text) {
+      const div = document.createElement("div");
+      div.className = "history-item";
+      div.textContent = text;
+      document.getElementById("historyList").appendChild(div);
+    }
+  </script>
+</body>
+</html>
