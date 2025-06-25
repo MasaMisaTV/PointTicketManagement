@@ -160,7 +160,7 @@
     }
     const today = new Date().toISOString().split("T")[0];
     if (time > today) {
-      alert("未来の日付は選べません");
+      alert("今日より後の日付は選べません");
       return;
     }
     const used = parseInt(document.getElementById("manualUsedTickets").value) || 0;
