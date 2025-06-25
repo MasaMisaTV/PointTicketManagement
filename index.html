@@ -141,6 +141,8 @@
   window.onload = function () {
     const todayStr = new Date().toISOString().split("T")[0];
     document.getElementById("manualDate").setAttribute("max", todayStr);
+    document.getElementById("manualDate").value = todayStr;
+    document.getElementById("deleteDate").value = todayStr;
 
     const storedCount = localStorage.getItem("ticketCount");
     const storedHistory = localStorage.getItem("ticketHistory");
