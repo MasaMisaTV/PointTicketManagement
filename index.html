@@ -1,34 +1,49 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ポイント券管理（保存付き）</title>
+  <meta charset="UTF-8" />
+  <title>ポイント券管理（保存＋長押しリセット）</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     input, button { margin: 5px; }
     .result, .history { margin-top: 15px; }
     .history-item { border-bottom: 1px solid #ccc; padding: 5px 0; }
+    #resetConfirm {
+      display: none;
+      border: 2px dashed red;
+      padding: 10px;
+      margin-top: 15px;
+      background-color: #ffe5e5;
+    }
   </style>
 </head>
 <body>
   <h2>🎫 ポイント券管理</h2>
 
   <label>現在のポイント券枚数: </label>
-  <span id="ticketCount">0</span><br>
+  <span id="ticketCount">0</span><br />
 
   <label>使用ポイント: </label>
-  <input type="number" id="usedPoints" value="0"><br>
+  <input type="number" id="usedPoints" value="0" /><br />
 
   <label>追加ポイント: </label>
-  <input type="number" id="addedPoints" value="0"><br>
+  <input type="number" id="addedPoints" value="0" /><br />
 
   <button onclick="updateTickets()">ポイント計算して保存</button>
+  <button onclick="showResetConfirm()" style="background-color: red; color: white;">リセット（全消去）</button>
 
   <div class="result" id="resultMessage"></div>
 
   <div class="history">
     <h3>📜 履歴</h3>
     <div id="historyList"></div>
+  </div>
+
+  <!-- リセット確認画面 -->
+  <div id="resetConfirm">
+    <p>⚠️ このボタンを <strong>5秒間長押し</strong> するとリセットされます。</p>
+    <button id="holdToResetBtn" style="background-color: darkred; color: white;">長押しで確定</button>
+    <div id="holdStatus" style="color: gray; margin-top: 5px;"></div>
   </div>
 
   <script>
@@ -89,6 +104,55 @@
       div.textContent = text;
       document.getElementById("historyList").appendChild(div);
     }
+
+    function showResetConfirm() {
+      document.getElementById("resetConfirm").style.display = "block";
+    }
+
+    function resetData() {
+      localStorage.removeItem("ticketCount");
+      localStorage.removeItem("ticketHistory");
+      ticketCount = 0;
+      history = [];
+      document.getElementById("ticketCount").textContent = "0";
+      document.getElementById("historyList").innerHTML = "";
+      document.getElementById("resultMessage").textContent = "🗑 リセットしました！";
+    }
+
+    const holdBtn = document.getElementById("holdToResetBtn");
+    const holdStatus = document.getElementById("holdStatus");
+    let holdTimer;
+    let holdProgress = 0;
+    const holdDuration = 5000;
+
+    holdBtn.addEventListener("mousedown", () => {
+      holdProgress = 0;
+      holdStatus.textContent = "長押し中...";
+      holdTimer = setInterval(() => {
+        holdProgress += 100;
+        holdStatus.textContent = `${(holdProgress / 1000).toFixed(1)}秒...`;
+        if (holdProgress >= holdDuration) {
+          clearInterval(holdTimer);
+          resetData();
+          holdStatus.textContent = "✅ リセット完了";
+          document.getElementById("resetConfirm").style.display = "none";
+        }
+      }, 100);
+    });
+
+    holdBtn.addEventListener("mouseup", () => {
+      clearInterval(holdTimer);
+      if (holdProgress < holdDuration) {
+        holdStatus.textContent = "キャンセルされました。";
+      }
+    });
+
+    holdBtn.addEventListener("mouseleave", () => {
+      clearInterval(holdTimer);
+      if (holdProgress < holdDuration) {
+        holdStatus.textContent = "キャンセルされました。";
+      }
+    });
   </script>
 </body>
 </html>
