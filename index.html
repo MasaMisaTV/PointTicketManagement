@@ -128,8 +128,13 @@
       const old = history[idx];
       ticketCount -= old.added - old.used;
     }
+    const net = added - used;
+    if (ticketCount + net < 0) {
+      alert("ポイント券が足りません");
+      return;
+    }
+    ticketCount += net;
     const entry = { time: now, used, added, total: ticketCount };
-    const idx = history.findIndex(e => e.time === now);
     if (idx !== -1) history[idx] = entry;
     else history.unshift(entry);
     saveData();
@@ -147,14 +152,17 @@
       return;
     }
     const net = added - used;
-    const newTotal = ticketCount + net;
-    if (newTotal < 0) {
+    const idx = history.findIndex(e => e.time === time);
+    if (idx !== -1) {
+      const old = history[idx];
+      ticketCount -= old.added - old.used;
+    }
+    if (ticketCount + net < 0) {
       alert("ポイント券がマイナスになります");
       return;
     }
-    ticketCount = newTotal;
+    ticketCount += net;
     const entry = { time, used, added, total: ticketCount };
-    const idx = history.findIndex(e => e.time === time);
     if (idx !== -1) history[idx] = entry;
     else history.unshift(entry);
     saveData();
