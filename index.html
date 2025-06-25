@@ -9,7 +9,7 @@
       padding: 20px;
       max-width: 700px;
       margin: auto;
-      position: relative; /* ← これで absolute なボタンが本文右上になる */
+      position: relative;
     }
 
     input, button, select {
@@ -38,8 +38,8 @@
       text-align: center;
     }
 
-    #settingsBtn, #closeSettingsBtn {
-      position: absolute;  /* ← fixed を absolute に変更 */
+    #settingsBtn {
+      position: absolute;
       top: 6px;
       right: 6px;
       font-size: 14px;
@@ -50,6 +50,14 @@
     }
 
     #closeSettingsBtn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: 14px;
+      padding: 4px 6px;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
       display: none;
     }
 
@@ -69,8 +77,34 @@
 </head>
 <body>
   <h2>📊 ポイント管理サイト</h2>
+
+  <!-- 設定ボタン（初期表示） -->
   <button id="settingsBtn" onclick="toggleSettings(true)">⚙️</button>
-  <button id="closeSettingsBtn" onclick="toggleSettings(false)">❌</button>
+
+  <!-- 設定画面 -->
+  <div id="settingsPanel">
+    <!-- バツボタン（設定開いてるときだけ表示） -->
+    <button id="closeSettingsBtn" onclick="toggleSettings(false)">❌</button>
+
+    <h3>⚙️ 設定</h3>
+
+    <label>📅 日付:</label>
+    <input type="date" id="manualDate">
+
+    <label>使用ポイント:</label>
+    <input type="number" id="manualUsed" value="0">
+
+    <label>追加ポイント:</label>
+    <input type="number" id="manualAdded" value="0">
+
+    <button onclick="addManualEntry()">➕ 履歴を追加</button>
+
+    <hr>
+    <label>🗑 削除する日付を入力（例：2025-06-25）:</label>
+    <input type="text" id="deleteDate">
+
+    <button onclick="deleteEntry()">❌ 履歴を削除</button>
+  </div>
 
   <div>
     <strong>現在のポイント券枚数:</strong> <span id="ticketCount">0</span><br>
@@ -96,28 +130,6 @@
     </thead>
     <tbody id="historyList"></tbody>
   </table>
-
-  <!-- 設定画面 -->
-  <div id="settingsPanel">
-    <h3>⚙️ 設定</h3>
-
-    <label>📅 日付:</label>
-    <input type="date" id="manualDate">
-
-    <label>使用ポイント:</label>
-    <input type="number" id="manualUsed" value="0">
-
-    <label>追加ポイント:</label>
-    <input type="number" id="manualAdded" value="0">
-
-    <button onclick="addManualEntry()">➕ 履歴を追加</button>
-
-    <hr>
-    <label>🗑 削除する日付を入力（例：2025-06-25）:</label>
-    <input type="text" id="deleteDate">
-
-    <button onclick="deleteEntry()">❌ 履歴を削除</button>
-  </div>
 
   <script>
     let ticketCount = 0;
@@ -234,9 +246,13 @@
     }
 
     function toggleSettings(show) {
-      document.getElementById("settingsPanel").style.display = show ? "block" : "none";
-      document.getElementById("settingsBtn").style.display = show ? "none" : "inline-block";
-      document.getElementById("closeSettingsBtn").style.display = show ? "inline-block" : "none";
+      const settingsPanel = document.getElementById("settingsPanel");
+      const settingsBtn = document.getElementById("settingsBtn");
+      const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+
+      settingsPanel.style.display = show ? "block" : "none";
+      settingsBtn.style.display = show ? "none" : "inline-block";
+      closeSettingsBtn.style.display = show ? "inline-block" : "none";
     }
   </script>
 </body>
