@@ -74,7 +74,9 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
 <div id="status"></div>
 
 <script>
-const apiUrl = "https://script.google.com/macros/s/AKfycbzpiE83tqx6YqGRaqCWpsgYsySRhsOOaJPDyI0mwJeR-89DBHDuDw6yk4AyhJujKOg/exec";
+// 🔹 あなたのAPI URL
+const apiUrl = "https://script.google.com/macros/s/AKfycbyvgzqxhHoM0JxWZilhPCN3h5KeFu2b7tNB1YVbzKNiNr8CjcADnilXtsRCgptQMqxE/exec";
+
 let currentUser = "";
 let ticketCount = 0;
 let history = [];
@@ -105,7 +107,7 @@ function login(){
     } else {
       history = [];
     }
-    saveData(); // rebuild and display
+    saveData();
     document.getElementById("status").textContent = "ログインしました";
   });
 }
