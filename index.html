@@ -1,103 +1,32 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>ポイかん</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      max-width: 700px;
-      margin: auto;
-      position: relative;
-      background-color: #fffbe7;
-      color: #333;
-    }
-    input, button, select {
-      margin: 5px 0;
-      padding: 6px;
-      width: 100%;
-    }
-    h1, h2 {
-      margin-bottom: 10px;
-      text-align: center;
-    }
-    #currentDate {
-      text-align: center;
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-    button {
-      font-weight: bold;
-      background-color: #444;
-      color: #fff;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 6px;
-      text-align: center;
-    }
-    #settingsBtn, #closeSettingsBtn {
-      position: fixed;
-      top: 5px;
-      right: 0px;
-      font-size: 14px;
-      padding: 8px 12px;
-      background-color: #f7941d;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      z-index: 1000;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    #closeSettingsBtn {
-      display: none;
-    }
-    #settingsPanel {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: #fffbe7;
-      overflow-y: auto;
-      z-index: 999;
-    }
-    #settingsContent {
-      max-width: 700px;
-      margin: auto;
-      padding: 20px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>ポイかん</title>
+<style>
+body { font-family: sans-serif; padding: 20px; max-width: 700px; margin: auto; background: #fffbe7; color: #333; }
+input, button { width: 100%; padding: 6px; margin: 4px 0; }
+h1, h2 { text-align: center; }
+#currentDate { text-align: center; font-size: 14px; margin-bottom: 10px; }
+#status { margin: 10px 0; color: green; text-align: center; }
+#settingsBtn, #closeSettingsBtn { position: fixed; top:5px; right:0; font-size:14px; padding:8px 12px; background:#f7941d; color:#fff; border:none; border-radius:6px; z-index:1000; }
+#closeSettingsBtn { display:none; }
+#settingsPanel { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#fffbe7; overflow-y:auto; z-index:999; }
+#settingsContent { max-width:700px; margin:auto; padding:20px; }
+table { width:100%; border-collapse:collapse; margin-top:20px; }
+th,td { border:1px solid #ccc; padding:6px; text-align:center; }
+</style>
 </head>
 <body>
-  <h3>ポイント券をもう全部数えなくていい！</h3>
-  <h1>ポイかん</h1>
-  <div id="currentDate"></div>
+<h2>ポイント券をもう全部数えなくていい！</h2>
+<h1>ポイかん</h1>
+<div id="currentDate"></div>
+<div id="loginSection">
+  <input id="userNumber" placeholder="ユーザー番号">
+  <button onclick="login()">ログイン</button>
+</div>
+<div id="mainSection" style="display:none;">
   <button id="settingsBtn" onclick="toggleSettings(true)">設定</button>
-  <div id="settingsPanel">
-    <div id="settingsContent">
-      <button id="closeSettingsBtn" onclick="toggleSettings(false)">戻る</button>
-      <h1>設定</h1>
-      <label>日付:</label>
-      <input type="date" id="manualDate">
-      <label>使用ポイント券枚数:</label>
-      <input type="number" id="manualUsedTickets" value="0">
-      <label>追加ポイント券枚数:</label>
-      <input type="number" id="manualAddedTickets" value="0">
-      <button onclick="addManualEntry()">+ 記録を追加</button>
-      <hr>
-      <label>削除する日付:</label>
-      <input type="date" id="deleteDate">
-      <button onclick="deleteEntry()">× 記録を削除</button>
-    </div>
-  </div>
   <div>
     <strong>現在のポイント券枚数:</strong> <span id="ticketCount">0</span><br>
     <strong>合計ポイント:</strong> <span id="totalPoints">0</span> pt
@@ -119,124 +48,177 @@
     </thead>
     <tbody id="historyList"></tbody>
   </table>
+  <button style="margin-top:20px;" onclick="logout()">ログアウト</button>
+</div>
+
+<div id="settingsPanel">
+  <div id="settingsContent">
+    <button id="closeSettingsBtn" onclick="toggleSettings(false)">戻る</button>
+    <h1>設定</h1>
+    <label>日付:</label>
+    <input type="date" id="manualDate">
+    <label>使用ポイント券枚数:</label>
+    <input type="number" id="manualUsedTickets" value="0">
+    <label>追加ポイント券枚数:</label>
+    <input type="number" id="manualAddedTickets" value="0">
+    <button onclick="addManualEntry()">+ 記録を追加</button>
+    <hr>
+    <label>削除する日付:</label>
+    <input type="date" id="deleteDate">
+    <button onclick="deleteEntry()">× 記録を削除</button>
+    <hr>
+    <button onclick="deleteAccount()" style="background:#d9534f;">🗑 アカウント削除</button>
+  </div>
+</div>
+
+<div id="status"></div>
+
 <script>
-  function getTodayJST() {
-    const now = new Date();
-    now.setHours(now.getHours() + 9);
-    return now.toISOString().split("T")[0];
+const apiUrl = "https://script.google.com/macros/s/AKfycbzpiE83tqx6YqGRaqCWpsgYsySRhsOOaJPDyI0mwJeR-89DBHDuDw6yk4AyhJujKOg/exec";
+let currentUser = "";
+let ticketCount = 0;
+let history = [];
+
+function getTodayJST(){
+  const now = new Date();
+  now.setHours(now.getHours() + 9);
+  return now.toISOString().split("T")[0];
+}
+
+document.getElementById("currentDate").textContent = "今日の日付: " + getTodayJST();
+
+function login(){
+  const user = document.getElementById("userNumber").value.trim();
+  if(!user){
+    alert("ユーザー番号を入力してください");
+    return;
   }
-
-  let ticketCount = 0;
-  let history = [];
-
-  function updateDisplay() {
-    document.getElementById("ticketCount").textContent = ticketCount;
-    document.getElementById("totalPoints").textContent = ticketCount * 5;
-  }
-
-  function rebuildTicketCount() {
-    ticketCount = 0;
-    history.sort((a, b) => a.time.localeCompare(b.time));
-    history.forEach(entry => {
-      ticketCount += entry.added - entry.used;
-      entry.total = ticketCount;
-    });
-  }
-
-  function saveData() {
-    rebuildTicketCount();
-    localStorage.setItem("ticketCount", ticketCount);
-    localStorage.setItem("ticketHistory", JSON.stringify(history));
-    updateDisplay();
-    refreshHistory();
-  }
-
-  window.onload = function () {
-    const todayStr = getTodayJST();
-    document.getElementById("manualDate").setAttribute("max", todayStr);
-    document.getElementById("currentDate").textContent = `今日の日付: ${todayStr}`;
-
-    const storedCount = localStorage.getItem("ticketCount");
-    const storedHistory = localStorage.getItem("ticketHistory");
-    if (storedHistory !== null) {
-      history = JSON.parse(storedHistory);
+  fetch(apiUrl + "?user=" + encodeURIComponent(user))
+  .then(res => res.text())
+  .then(txt=>{
+    currentUser = user;
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("mainSection").style.display = "block";
+    if(txt && txt !== "{}"){
+      const data = JSON.parse(txt);
+      history = data.history || [];
+    } else {
+      history = [];
     }
-    saveData();
-  };
+    saveData(); // rebuild and display
+    document.getElementById("status").textContent = "ログインしました";
+  });
+}
 
-  function updateTickets() {
-    const used = parseInt(document.getElementById("usedTickets").value) || 0;
-    const added = parseInt(document.getElementById("addedTickets").value) || 0;
-    if (used === 0 && added === 0) {
-      alert("使用または追加ポイント券枚数を入力してください");
-      return;
-    }
-    const now = getTodayJST();
-    const idx = history.findIndex(e => e.time === now);
-    const entry = { time: now, used, added };
-    if (idx !== -1) history[idx] = entry;
-    else history.push(entry);
-    saveData();
-  }
+function saveToServer(){
+  if(!currentUser) return;
+  const content = JSON.stringify({history});
+  fetch(apiUrl + "?user=" + encodeURIComponent(currentUser) + "&mode=save",{
+    method:"POST",
+    body:content
+  })
+  .then(res=>res.text())
+  .then(()=>{document.getElementById("status").textContent="保存しました";});
+}
 
-  function addManualEntry() {
-    const time = document.getElementById("manualDate").value;
-    if (!time) {
-      alert("日付を選んでください");
-      return;
-    }
-    const today = getTodayJST();
-    if (time > today) {
-      alert("今日より後の日付は選べません");
-      return;
-    }
-    const used = parseInt(document.getElementById("manualUsedTickets").value) || 0;
-    const added = parseInt(document.getElementById("manualAddedTickets").value) || 0;
-    if (used === 0 && added === 0) {
-      alert("使用または追加ポイント券枚数を入力してください");
-      return;
-    }
-    const idx = history.findIndex(e => e.time === time);
-    const entry = { time, used, added };
-    if (idx !== -1) history[idx] = entry;
-    else history.push(entry);
-    saveData();
-  }
+function updateDisplay(){
+  document.getElementById("ticketCount").textContent = ticketCount;
+  document.getElementById("totalPoints").textContent = ticketCount*5;
+}
 
-  function deleteEntry() {
-    const delTime = document.getElementById("deleteDate").value;
-    const index = history.findIndex(e => e.time === delTime);
-    if (index === -1) {
-      alert("その日付の履歴が見つかりません。");
-      return;
-    }
-    history.splice(index, 1);
-    saveData();
-  }
+function rebuildTicketCount(){
+  ticketCount=0;
+  history.sort((a,b)=>a.time.localeCompare(b.time));
+  history.forEach(e=>{
+    ticketCount+=e.added - e.used;
+    e.total = ticketCount;
+  });
+}
 
-  function refreshHistory() {
-    const list = document.getElementById("historyList");
-    list.innerHTML = "";
-    history
-      .slice()
-      .sort((a, b) => b.time.localeCompare(a.time))
-      .forEach(entry => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${entry.time}</td>
-          <td>${entry.used}</td>
-          <td>${entry.added}</td>
-          <td>${entry.total}</td>
-          <td>${entry.total * 5}</td>`;
-        list.appendChild(row);
-      });
-  }
+function saveData(){
+  rebuildTicketCount();
+  updateDisplay();
+  refreshHistory();
+  saveToServer();
+}
 
-  function toggleSettings(show) {
-    document.getElementById("settingsPanel").style.display = show ? "block" : "none";
-    document.getElementById("settingsBtn").style.display = show ? "none" : "inline-block";
-    document.getElementById("closeSettingsBtn").style.display = show ? "inline-block" : "none";
+function updateTickets(){
+  const used = parseInt(document.getElementById("usedTickets").value)||0;
+  const added = parseInt(document.getElementById("addedTickets").value)||0;
+  if(used===0 && added===0){
+    alert("使用または追加ポイント券枚数を入力してください");
+    return;
   }
+  const now = getTodayJST();
+  const idx = history.findIndex(e=>e.time===now);
+  const entry = {time:now, used, added};
+  if(idx!==-1) history[idx]=entry;
+  else history.push(entry);
+  saveData();
+}
+
+function addManualEntry(){
+  const time = document.getElementById("manualDate").value;
+  if(!time){ alert("日付を選んでください"); return; }
+  const today=getTodayJST();
+  if(time>today){ alert("今日より後の日付は選べません"); return; }
+  const used=parseInt(document.getElementById("manualUsedTickets").value)||0;
+  const added=parseInt(document.getElementById("manualAddedTickets").value)||0;
+  if(used===0 && added===0){
+    alert("使用または追加ポイント券枚数を入力してください");
+    return;
+  }
+  const idx=history.findIndex(e=>e.time===time);
+  const entry={time, used, added};
+  if(idx!==-1)history[idx]=entry;
+  else history.push(entry);
+  saveData();
+}
+
+function deleteEntry(){
+  const delTime = document.getElementById("deleteDate").value;
+  const index = history.findIndex(e=>e.time===delTime);
+  if(index===-1){
+    alert("その日付の履歴が見つかりません");
+    return;
+  }
+  history.splice(index,1);
+  saveData();
+}
+
+function deleteAccount(){
+  if(!currentUser) return;
+  if(!confirm("本当にアカウントを削除しますか？")) return;
+  fetch(apiUrl + "?user=" + encodeURIComponent(currentUser) + "&mode=delete",{
+    method:"POST",
+    body:""
+  }).then(()=> {
+    alert("アカウントを削除しました");
+    location.reload();
+  });
+}
+
+function logout(){
+  if(confirm("ログアウトしますか？")){
+    location.reload();
+  }
+}
+
+function refreshHistory(){
+  const list=document.getElementById("historyList");
+  list.innerHTML="";
+  history.slice().sort((a,b)=>b.time.localeCompare(a.time)).forEach(e=>{
+    const row=document.createElement("tr");
+    row.innerHTML=`<td>${e.time}</td><td>${e.used}</td><td>${e.added}</td><td>${e.total}</td><td>${e.total*5}</td>`;
+    list.appendChild(row);
+  });
+}
+
+function toggleSettings(show){
+  document.getElementById("settingsPanel").style.display = show?"block":"none";
+  document.getElementById("settingsBtn").style.display = show?"none":"inline-block";
+  document.getElementById("closeSettingsBtn").style.display = show?"inline-block":"none";
+}
 </script>
 </body>
 </html>
