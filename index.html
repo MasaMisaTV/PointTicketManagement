@@ -75,7 +75,7 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
 <div id="status"></div>
 
 <script>
-// ✅ あなたのAPI URL
+// あなたのAPI URL
 const apiUrl = "https://script.google.com/macros/s/AKfycbz4jx06-o-_gwy3fRXTZIJ1pjbuZjq7-vl-izjb4N-TjOaZiU4TEQO7itxQDdtZYWE/exec";
 
 let currentUser = "";
@@ -101,15 +101,15 @@ function signIn(){
   fetch(apiUrl + "?user=" + encodeURIComponent(user))
   .then(res => res.text())
   .then(txt=>{
+    if(!txt || txt==="{}"){
+      alert("このユーザー番号は存在しません。サインアップしてください。");
+      return;
+    }
     currentUser = user;
     document.getElementById("loginSection").style.display = "none";
     document.getElementById("mainSection").style.display = "block";
-    if(txt && txt !== "{}"){
-      const data = JSON.parse(txt);
-      history = data.history || [];
-    } else {
-      history = [];
-    }
+    const data = JSON.parse(txt);
+    history = data.history || [];
     saveData();
     document.getElementById("status").textContent = "サインインしました";
   });
@@ -121,15 +121,23 @@ function signUp(){
     alert("ユーザー番号を入力してください");
     return;
   }
-  if(!confirm("新しいアカウントを作成しますか？")){
-    return;
-  }
-  currentUser = user;
-  history = [];
-  saveData();
-  document.getElementById("loginSection").style.display = "none";
-  document.getElementById("mainSection").style.display = "block";
-  document.getElementById("status").textContent = "サインアップしました（新規作成）";
+  fetch(apiUrl + "?user=" + encodeURIComponent(user))
+  .then(res => res.text())
+  .then(txt=>{
+    if(txt && txt!=="{}"){
+      alert("このユーザー番号はすでに存在します。サインインしてください。");
+      return;
+    }
+    if(!confirm("新しいアカウントを作成しますか？")){
+      return;
+    }
+    currentUser = user;
+    history = [];
+    saveData();
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("mainSection").style.display = "block";
+    document.getElementById("status").textContent = "サインアップしました（新規作成）";
+  });
 }
 
 function saveToServer(){
