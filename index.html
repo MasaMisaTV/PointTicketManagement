@@ -23,7 +23,8 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
 <div id="currentDate"></div>
 <div id="loginSection">
   <input id="userNumber" placeholder="ユーザー番号">
-  <button onclick="login()">ログイン</button>
+  <button onclick="signIn()">サインイン</button>
+  <button onclick="signUp()">サインアップ</button>
 </div>
 <div id="mainSection" style="display:none;">
   <button id="settingsBtn" onclick="toggleSettings(true)">設定</button>
@@ -74,7 +75,7 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
 <div id="status"></div>
 
 <script>
-// 🔹 あなたの最新API URL
+// ✅ あなたのAPI URL
 const apiUrl = "https://script.google.com/macros/s/AKfycbz4jx06-o-_gwy3fRXTZIJ1pjbuZjq7-vl-izjb4N-TjOaZiU4TEQO7itxQDdtZYWE/exec";
 
 let currentUser = "";
@@ -88,8 +89,10 @@ function getTodayJST(){
 }
 
 document.getElementById("currentDate").textContent = "今日の日付: " + getTodayJST();
+document.getElementById("manualDate").setAttribute("max", getTodayJST());
+document.getElementById("deleteDate").setAttribute("max", getTodayJST());
 
-function login(){
+function signIn(){
   const user = document.getElementById("userNumber").value.trim();
   if(!user){
     alert("ユーザー番号を入力してください");
@@ -108,8 +111,25 @@ function login(){
       history = [];
     }
     saveData();
-    document.getElementById("status").textContent = "ログインしました";
+    document.getElementById("status").textContent = "サインインしました";
   });
+}
+
+function signUp(){
+  const user = document.getElementById("userNumber").value.trim();
+  if(!user){
+    alert("ユーザー番号を入力してください");
+    return;
+  }
+  if(!confirm("新しいアカウントを作成しますか？")){
+    return;
+  }
+  currentUser = user;
+  history = [];
+  saveData();
+  document.getElementById("loginSection").style.display = "none";
+  document.getElementById("mainSection").style.display = "block";
+  document.getElementById("status").textContent = "サインアップしました（新規作成）";
 }
 
 function saveToServer(){
