@@ -15,20 +15,33 @@ h1, h2 { text-align: center; }
 #settingsContent { max-width:700px; margin:auto; padding:20px; }
 table { width:100%; border-collapse:collapse; margin-top:20px; }
 th,td { border:1px solid #ccc; padding:6px; text-align:center; }
+.hidden { display:none; }
 </style>
 </head>
 <body>
 <h2>ポイント券をもう全部数えなくていい！</h2>
 <h1>ポイかん</h1>
 <div id="currentDate"></div>
+
 <div id="loginSection">
   <input id="userNumber" placeholder="ユーザー番号">
+  <input id="loginPassword" type="password" placeholder="パスワード">
   <button onclick="signIn()">サインイン</button>
-  <button onclick="signUp()">サインアップ</button>
+  <button onclick="showSignup()">サインアップ</button>
 </div>
-<div id="mainSection" style="display:none;">
+
+<div id="signupSection" class="hidden">
+  <input id="signupUserNumber" placeholder="ユーザー番号">
+  <input id="signupNickname" placeholder="ニックネーム">
+  <input id="signupPassword" type="password" placeholder="パスワード">
+  <button onclick="signUp()">登録する</button>
+  <button onclick="showLogin()">戻る</button>
+</div>
+
+<div id="mainSection" class="hidden">
   <button id="settingsBtn" onclick="toggleSettings(true)">設定</button>
   <div>
+    <strong>ニックネーム:</strong> <span id="nicknameDisplay"></span><br>
     <strong>現在のポイント券枚数:</strong> <span id="ticketCount">0</span><br>
     <strong>合計ポイント:</strong> <span id="totalPoints">0</span> pt
   </div>
@@ -81,16 +94,15 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
 </div>
 
 <div id="status"></div>
-
 <script>
-// あなたのAPI URL（必ず自分のURLに置き換えてください）
-const apiUrl = "https://script.google.com/macros/s/AKfycbxPaX1J1yTiOkPSgdnAR8zs9VL5Lse4Gkmm5TL6SvBOzvdTDK-OtIE4FAMpHnvUG3Yv/exec";
+const apiUrl = "https://script.google.com/macros/s/AKfycbwYSDc20gwlCvcOzC8ZS2Laat8j0Z3JjqjBEbBUJi5CJlo4V2VMmpHfZBsGd4mviU9H/exec";
 
 let currentUser = "";
+let currentPass = "";
+let nickname = "";
 let ticketCount = 0;
 let history = [];
 let deleteHoldTimer;
-
 function getTodayJST(){
   const now = new Date();
   now.setHours(now.getHours() + 9);
@@ -101,58 +113,72 @@ document.getElementById("currentDate").textContent = "今日の日付: " + getTo
 document.getElementById("manualDate").setAttribute("max", getTodayJST());
 document.getElementById("deleteDate").setAttribute("max", getTodayJST());
 
+function showSignup(){
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("signupSection").classList.remove("hidden");
+}
+
+function showLogin(){
+  document.getElementById("signupSection").classList.add("hidden");
+  document.getElementById("loginSection").classList.remove("hidden");
+}
+
 function signIn(){
   const user = document.getElementById("userNumber").value.trim();
-  if(!user){
-    alert("ユーザー番号を入力してください");
+  const pass = document.getElementById("loginPassword").value.trim();
+  if(!user || !pass){
+    alert("ユーザー番号とパスワードを入力してください");
     return;
   }
-  fetch(apiUrl + "?user=" + encodeURIComponent(user))
+  fetch(apiUrl + "?user=" + encodeURIComponent(user) + "&pass=" + encodeURIComponent(pass))
   .then(res => res.text())
   .then(txt=>{
     if(!txt || txt==="{}"){
-      alert("このユーザー番号は存在しません。サインアップしてください。");
+      alert("ユーザー番号かパスワードが間違っています");
       return;
     }
     currentUser = user;
-    document.getElementById("loginSection").style.display = "none";
-    document.getElementById("mainSection").style.display = "block";
+    currentPass = pass;
     const data = JSON.parse(txt);
     history = data.history || [];
+    nickname = data.nickname || "";
+    document.getElementById("nicknameDisplay").textContent = nickname;
+    document.getElementById("loginSection").classList.add("hidden");
+    document.getElementById("signupSection").classList.add("hidden");
+    document.getElementById("mainSection").classList.remove("hidden");
     saveData();
     document.getElementById("status").textContent = "サインインしました";
   });
 }
 
 function signUp(){
-  const user = document.getElementById("userNumber").value.trim();
-  if(!user){
-    alert("ユーザー番号を入力してください");
+  const user = document.getElementById("signupUserNumber").value.trim();
+  const nick = document.getElementById("signupNickname").value.trim();
+  const pass = document.getElementById("signupPassword").value.trim();
+  if(!user || !nick || !pass){
+    alert("すべて入力してください");
     return;
   }
-  fetch(apiUrl + "?user=" + encodeURIComponent(user))
-  .then(res => res.text())
+  fetch(apiUrl + "?user=" + encodeURIComponent(user) + "&mode=signup&nickname=" + encodeURIComponent(nick) + "&pass=" + encodeURIComponent(pass), {
+    method:"POST",
+    body:""
+  })
+  .then(res=>res.text())
   .then(txt=>{
-    if(txt && txt!=="{}"){
-      alert("このユーザー番号はすでに存在します。サインインしてください。");
+    const data = JSON.parse(txt);
+    if(data.error){
+      alert(data.error);
       return;
     }
-    if(!confirm("新しいアカウントを作成しますか？")){
-      return;
-    }
-    currentUser = user;
-    history = [];
-    saveData();
-    document.getElementById("loginSection").style.display = "none";
-    document.getElementById("mainSection").style.display = "block";
-    document.getElementById("status").textContent = "サインアップしました（新規作成）";
+    alert("サインアップが完了しました。ログインしてください。");
+    showLogin();
   });
 }
 
 function saveToServer(){
-  if(!currentUser) return;
-  const content = JSON.stringify({history});
-  fetch(apiUrl + "?user=" + encodeURIComponent(currentUser) + "&mode=save",{
+  if(!currentUser || !currentPass) return;
+  const content = JSON.stringify(history);
+  fetch(apiUrl + "?user=" + encodeURIComponent(currentUser) + "&mode=save&pass=" + encodeURIComponent(currentPass),{
     method:"POST",
     body:content
   })
@@ -180,7 +206,6 @@ function saveData(){
   refreshHistory();
   saveToServer();
 }
-
 function updateTickets(){
   const used = parseInt(document.getElementById("usedTickets").value)||0;
   const added = parseInt(document.getElementById("addedTickets").value)||0;
@@ -198,9 +223,15 @@ function updateTickets(){
 
 function addManualEntry(){
   const time = document.getElementById("manualDate").value;
-  if(!time){ alert("日付を選んでください"); return; }
+  if(!time){
+    alert("日付を選んでください");
+    return;
+  }
   const today=getTodayJST();
-  if(time>today){ alert("今日より後の日付は選べません"); return; }
+  if(time>today){
+    alert("今日より後の日付は選べません");
+    return;
+  }
   const used=parseInt(document.getElementById("manualUsedTickets").value)||0;
   const added=parseInt(document.getElementById("manualAddedTickets").value)||0;
   if(used===0 && added===0){
@@ -236,11 +267,12 @@ function cancelDeleteHold(){
 }
 
 function deleteAccount(){
-  if(!currentUser) return;
-  fetch(apiUrl + "?user=" + encodeURIComponent(currentUser) + "&mode=delete",{
+  if(!currentUser || !currentPass) return;
+  fetch(apiUrl + "?user=" + encodeURIComponent(currentUser) + "&mode=delete&pass=" + encodeURIComponent(currentPass),{
     method:"POST",
     body:""
-  }).then(()=> {
+  }).then(res=>res.text())
+  .then(txt=>{
     alert("アカウントを削除しました");
     location.reload();
   });
@@ -270,3 +302,4 @@ function toggleSettings(show){
 </script>
 </body>
 </html>
+
