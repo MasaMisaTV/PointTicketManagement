@@ -114,5 +114,17 @@ function logout(){if(confirm("ログアウトしますか？")){location.reload(
 function refreshHistory(){const list=document.getElementById("historyList");list.innerHTML="";history.slice().sort((a,b)=>b.time.localeCompare(a.time)).forEach(e=>{const row=document.createElement("tr");row.innerHTML=`<td>${e.time}</td><td>${e.used}</td><td>${e.added}</td><td>${e.total}</td><td>${e.total*5}</td>`;list.appendChild(row);});}
 function toggleSettings(show){document.getElementById("settingsPanel").style.display=show?"block":"none";document.getElementById("settingsBtn").style.display=show?"none":"inline-block";document.getElementById("closeSettingsBtn").style.display=show?"inline-block":"none";}
 </script>
+  <div id="deleteOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);color:white;text-align:center;padding-top:200px;font-size:20px;">
+  長押しで削除... <span id="deleteCount">0</span>s<br>
+  <button ontouchstart="startDeleteHold()"
+          ontouchend="cancelDeleteHold()"
+          onmousedown="startDeleteHold()"
+          onmouseup="cancelDeleteHold()"
+          onmouseleave="cancelDeleteHold()"
+          style="margin-top:20px;padding:10px 20px;">
+    削除を実行する
+  </button><br><br>
+  <button onclick="hideDeleteOverlay()" style="margin-top:20px;">キャンセル</button>
+</div>
 </body>
 </html>
