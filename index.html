@@ -22,22 +22,17 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
 <h2>ポイント券をもう全部数えなくていい！</h2>
 <h1>ポイかん</h1>
 <div id="currentDate"></div>
-
 <div id="loginSection">
   <input id="userNumber" placeholder="ユーザー番号">
-  <input id="loginPassword" type="password" placeholder="パスワード">
   <button onclick="signIn()">サインイン</button>
   <button onclick="showSignup()">サインアップ</button>
 </div>
-
 <div id="signupSection" class="hidden">
   <input id="signupUserNumber" placeholder="ユーザー番号">
   <input id="signupNickname" placeholder="ニックネーム">
-  <input id="signupPassword" type="password" placeholder="パスワード">
   <button onclick="signUp()">登録する</button>
   <button onclick="showLogin()">戻る</button>
 </div>
-
 <div id="mainSection" class="hidden">
   <button id="settingsBtn" onclick="toggleSettings(true)">設定</button>
   <div>
@@ -64,7 +59,6 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
   </table>
   <button style="margin-top:20px;" onclick="logout()">ログアウト</button>
 </div>
-
 <div id="settingsPanel">
   <div id="settingsContent">
     <button id="closeSettingsBtn" onclick="toggleSettings(false)">戻る</button>
@@ -92,214 +86,33 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
     </button>
   </div>
 </div>
-
 <div id="status"></div>
 <script>
-const apiUrl = "https://script.google.com/macros/s/AKfycbzKwlJI4FY20jtPhbjfnca1dIS2VBo0QdFkYOqkFeFwBuWMrzk2U9XeNoxbx35oe7_5/exec";
-
+const apiUrl = "https://script.google.com/macros/s/AKfycbzzoI6xCjSjAQ6rDZp88nUwSLAbl6nzpi9ipmGC-MTryg12tDcyLzf0AuEjY1skoSiT/exec";
 let currentUser = "";
-let currentPass = "";
 let nickname = "";
 let ticketCount = 0;
 let history = [];
 let deleteHoldTimer;
-function getTodayJST(){
-  const now = new Date();
-  now.setHours(now.getHours() + 9);
-  return now.toISOString().split("T")[0];
-}
-
-document.getElementById("currentDate").textContent = "今日の日付: " + getTodayJST();
-document.getElementById("manualDate").setAttribute("max", getTodayJST());
-document.getElementById("deleteDate").setAttribute("max", getTodayJST());
-
-function showSignup(){
-  document.getElementById("loginSection").classList.add("hidden");
-  document.getElementById("signupSection").classList.remove("hidden");
-}
-
-function showLogin(){
-  document.getElementById("signupSection").classList.add("hidden");
-  document.getElementById("loginSection").classList.remove("hidden");
-}
-
-function signIn(){
-  const user = document.getElementById("userNumber").value.trim();
-  const pass = document.getElementById("loginPassword").value.trim();
-  if(!user || !pass){
-    alert("ユーザー番号とパスワードを入力してください");
-    return;
-  }
-  fetch(apiUrl + "?user=" + encodeURIComponent(user) + "&pass=" + encodeURIComponent(pass))
-  .then(res => res.text())
-  .then(txt=>{
-    if(!txt || txt==="{}"){
-      alert("ユーザー番号かパスワードが間違っています");
-      return;
-    }
-    currentUser = user;
-    currentPass = pass;
-    const data = JSON.parse(txt);
-    history = data.history || [];
-    nickname = data.nickname || "";
-    document.getElementById("nicknameDisplay").textContent = nickname;
-    document.getElementById("loginSection").classList.add("hidden");
-    document.getElementById("signupSection").classList.add("hidden");
-    document.getElementById("mainSection").classList.remove("hidden");
-    saveData();
-    document.getElementById("status").textContent = "サインインしました";
-  });
-}
-
-function signUp(){
-  const user = document.getElementById("signupUserNumber").value.trim();
-  const nick = document.getElementById("signupNickname").value.trim();
-  const pass = document.getElementById("signupPassword").value.trim();
-  if(!user || !nick || !pass){
-    alert("すべて入力してください");
-    return;
-  }
-  fetch(apiUrl + "?user=" + encodeURIComponent(user) + "&mode=signup&nickname=" + encodeURIComponent(nick) + "&pass=" + encodeURIComponent(pass), {
-    method:"POST",
-    body:""
-  })
-  .then(res=>res.text())
-  .then(txt=>{
-    const data = JSON.parse(txt);
-    if(data.error){
-      alert(data.error);
-      return;
-    }
-    alert("サインアップが完了しました。ログインしてください。");
-    showLogin();
-  });
-}
-
-function saveToServer(){
-  if(!currentUser || !currentPass) return;
-  const content = JSON.stringify(history);
-  fetch(apiUrl + "?user=" + encodeURIComponent(currentUser) + "&mode=save&pass=" + encodeURIComponent(currentPass),{
-    method:"POST",
-    body:content
-  })
-  .then(res=>res.text())
-  .then(()=>{document.getElementById("status").textContent="保存しました";});
-}
-
-function updateDisplay(){
-  document.getElementById("ticketCount").textContent = ticketCount;
-  document.getElementById("totalPoints").textContent = ticketCount*5;
-}
-
-function rebuildTicketCount(){
-  ticketCount=0;
-  history.sort((a,b)=>a.time.localeCompare(b.time));
-  history.forEach(e=>{
-    ticketCount+=e.added - e.used;
-    e.total = ticketCount;
-  });
-}
-
-function saveData(){
-  rebuildTicketCount();
-  updateDisplay();
-  refreshHistory();
-  saveToServer();
-}
-function updateTickets(){
-  const used = parseInt(document.getElementById("usedTickets").value)||0;
-  const added = parseInt(document.getElementById("addedTickets").value)||0;
-  if(used===0 && added===0){
-    alert("使用または追加ポイント券枚数を入力してください");
-    return;
-  }
-  const now = getTodayJST();
-  const idx = history.findIndex(e=>e.time===now);
-  const entry = {time:now, used, added};
-  if(idx!==-1) history[idx]=entry;
-  else history.push(entry);
-  saveData();
-}
-
-function addManualEntry(){
-  const time = document.getElementById("manualDate").value;
-  if(!time){
-    alert("日付を選んでください");
-    return;
-  }
-  const today=getTodayJST();
-  if(time>today){
-    alert("今日より後の日付は選べません");
-    return;
-  }
-  const used=parseInt(document.getElementById("manualUsedTickets").value)||0;
-  const added=parseInt(document.getElementById("manualAddedTickets").value)||0;
-  if(used===0 && added===0){
-    alert("使用または追加ポイント券枚数を入力してください");
-    return;
-  }
-  const idx=history.findIndex(e=>e.time===time);
-  const entry={time, used, added};
-  if(idx!==-1)history[idx]=entry;
-  else history.push(entry);
-  saveData();
-}
-
-function deleteEntry(){
-  const delTime = document.getElementById("deleteDate").value;
-  const index = history.findIndex(e=>e.time===delTime);
-  if(index===-1){
-    alert("その日付の履歴が見つかりません");
-    return;
-  }
-  history.splice(index,1);
-  saveData();
-}
-
-// 長押し削除
-function startDeleteHold(){
-  deleteHoldTimer = setTimeout(()=>{
-    deleteAccount();
-  }, 3000);
-}
-function cancelDeleteHold(){
-  clearTimeout(deleteHoldTimer);
-}
-
-function deleteAccount(){
-  if(!currentUser || !currentPass) return;
-  fetch(apiUrl + "?user=" + encodeURIComponent(currentUser) + "&mode=delete&pass=" + encodeURIComponent(currentPass),{
-    method:"POST",
-    body:""
-  }).then(res=>res.text())
-  .then(txt=>{
-    alert("アカウントを削除しました");
-    location.reload();
-  });
-}
-
-function logout(){
-  if(confirm("ログアウトしますか？")){
-    location.reload();
-  }
-}
-
-function refreshHistory(){
-  const list=document.getElementById("historyList");
-  list.innerHTML="";
-  history.slice().sort((a,b)=>b.time.localeCompare(a.time)).forEach(e=>{
-    const row=document.createElement("tr");
-    row.innerHTML=`<td>${e.time}</td><td>${e.used}</td><td>${e.added}</td><td>${e.total}</td><td>${e.total*5}</td>`;
-    list.appendChild(row);
-  });
-}
-
-function toggleSettings(show){
-  document.getElementById("settingsPanel").style.display = show?"block":"none";
-  document.getElementById("settingsBtn").style.display = show?"none":"inline-block";
-  document.getElementById("closeSettingsBtn").style.display = show?"inline-block":"none";
-}
+function getTodayJST(){const now=new Date();now.setHours(now.getHours()+9);return now.toISOString().split("T")[0];}
+document.getElementById("currentDate").textContent="今日の日付: "+getTodayJST();document.getElementById("manualDate").setAttribute("max",getTodayJST());document.getElementById("deleteDate").setAttribute("max",getTodayJST());
+function showSignup(){document.getElementById("loginSection").classList.add("hidden");document.getElementById("signupSection").classList.remove("hidden");}
+function showLogin(){document.getElementById("signupSection").classList.add("hidden");document.getElementById("loginSection").classList.remove("hidden");}
+function signIn(){const user=document.getElementById("userNumber").value.trim();if(!user){alert("ユーザー番号を入力してください");return;}fetch(apiUrl+"?user="+encodeURIComponent(user)).then(res=>res.text()).then(txt=>{if(!txt||txt==="{}"){alert("ユーザーが存在しません");return;}currentUser=user;const data=JSON.parse(txt);history=data.history||[];nickname=data.nickname||"";document.getElementById("nicknameDisplay").textContent=nickname;document.getElementById("loginSection").classList.add("hidden");document.getElementById("signupSection").classList.add("hidden");document.getElementById("mainSection").classList.remove("hidden");saveData();document.getElementById("status").textContent="サインインしました";});}
+function signUp(){const user=document.getElementById("signupUserNumber").value.trim();const nick=document.getElementById("signupNickname").value.trim();if(!user||!nick){alert("ユーザー番号とニックネームを入力してください");return;}fetch(apiUrl+"?user="+encodeURIComponent(user)+"&mode=signup&nickname="+encodeURIComponent(nick),{method:"POST",body:""}).then(res=>res.text()).then(txt=>{const data=JSON.parse(txt);if(data.error){alert(data.error);return;}alert("サインアップが完了しました。ログインしてください。");showLogin();});}
+function saveToServer(){if(!currentUser)return;const content=JSON.stringify(history);fetch(apiUrl+"?user="+encodeURIComponent(currentUser)+"&mode=save",{method:"POST",body:content}).then(res=>res.text()).then(()=>{document.getElementById("status").textContent="保存しました";});}
+function updateDisplay(){document.getElementById("ticketCount").textContent=ticketCount;document.getElementById("totalPoints").textContent=ticketCount*5;}
+function rebuildTicketCount(){ticketCount=0;history.sort((a,b)=>a.time.localeCompare(b.time));history.forEach(e=>{ticketCount+=e.added-e.used;e.total=ticketCount;});}
+function saveData(){rebuildTicketCount();updateDisplay();refreshHistory();saveToServer();}
+function updateTickets(){const used=parseInt(document.getElementById("usedTickets").value)||0;const added=parseInt(document.getElementById("addedTickets").value)||0;if(used===0&&added===0){alert("使用または追加ポイント券枚数を入力してください");return;}const now=getTodayJST();const idx=history.findIndex(e=>e.time===now);const entry={time:now,used,added};if(idx!==-1)history[idx]=entry;else history.push(entry);saveData();}
+function addManualEntry(){const time=document.getElementById("manualDate").value;if(!time){alert("日付を選んでください");return;}const today=getTodayJST();if(time>today){alert("今日より後の日付は選べません");return;}const used=parseInt(document.getElementById("manualUsedTickets").value)||0;const added=parseInt(document.getElementById("manualAddedTickets").value)||0;if(used===0&&added===0){alert("使用または追加ポイント券枚数を入力してください");return;}const idx=history.findIndex(e=>e.time===time);const entry={time,used,added};if(idx!==-1)history[idx]=entry;else history.push(entry);saveData();}
+function deleteEntry(){const delTime=document.getElementById("deleteDate").value;const index=history.findIndex(e=>e.time===delTime);if(index===-1){alert("その日付の履歴が見つかりません");return;}history.splice(index,1);saveData();}
+function startDeleteHold(){deleteHoldTimer=setTimeout(()=>{deleteAccount();},3000);}
+function cancelDeleteHold(){clearTimeout(deleteHoldTimer);}
+function deleteAccount(){if(!currentUser)return;fetch(apiUrl+"?user="+encodeURIComponent(currentUser)+"&mode=delete",{method:"POST",body:""}).then(res=>res.text()).then(()=>{alert("アカウントを削除しました");location.reload();});}
+function logout(){if(confirm("ログアウトしますか？")){location.reload();}}
+function refreshHistory(){const list=document.getElementById("historyList");list.innerHTML="";history.slice().sort((a,b)=>b.time.localeCompare(a.time)).forEach(e=>{const row=document.createElement("tr");row.innerHTML=`<td>${e.time}</td><td>${e.used}</td><td>${e.added}</td><td>${e.total}</td><td>${e.total*5}</td>`;list.appendChild(row);});}
+function toggleSettings(show){document.getElementById("settingsPanel").style.display=show?"block":"none";document.getElementById("settingsBtn").style.display=show?"none":"inline-block";document.getElementById("closeSettingsBtn").style.display=show?"inline-block":"none";}
 </script>
 </body>
 </html>
-
