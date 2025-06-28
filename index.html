@@ -225,9 +225,7 @@ function deleteEntry(){
 
 // 長押し削除
 function startDeleteHold(){
-  deleteHoldTimer = setTimeout(()=>{
-    deleteAccount();
-  }, 3000);
+  deleteAccount();
 }
 function cancelDeleteHold(){
   clearTimeout(deleteHoldTimer);
