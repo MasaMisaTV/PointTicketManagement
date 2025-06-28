@@ -75,15 +75,9 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
     <input type="date" id="deleteDate">
     <button onclick="deleteEntry()">× 記録を削除</button>
     <hr>
-    <button id="deleteBtn"
-      ontouchstart="startDeleteHold()"
-      ontouchend="cancelDeleteHold()"
-      onmousedown="startDeleteHold()"
-      onmouseup="cancelDeleteHold()"
-      onmouseleave="cancelDeleteHold()"
-      style="background:#d9534f;">
-      🗑 アカウント削除（3秒長押し）
-    </button>
+   <button onclick="showDeleteOverlay()" style="background:#d9534f;">
+  🗑 アカウント削除
+</button>
   </div>
 </div>
 <div id="status"></div>
