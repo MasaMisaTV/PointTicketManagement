@@ -69,6 +69,8 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
     <button onclick="deleteEntry()">× 記録を削除</button>
     <hr>
     <button id="deleteBtn"
+      ontouchstart="startDeleteHold()"
+      ontouchend="cancelDeleteHold()"
       onmousedown="startDeleteHold()"
       onmouseup="cancelDeleteHold()"
       onmouseleave="cancelDeleteHold()"
@@ -81,8 +83,8 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
 <div id="status"></div>
 
 <script>
-// あなたのAPI URL
-const apiUrl = "https://script.google.com/macros/s/AKfycbz4jx06-o-_gwy3fRXTZIJ1pjbuZjq7-vl-izjb4N-TjOaZiU4TEQO7itxQDdtZYWE/exec";
+// あなたのAPI URL（必ず自分のURLに置き換えてください）
+const apiUrl = "https://script.google.com/macros/s/AKfycbxPaX1J1yTiOkPSgdnAR8zs9VL5Lse4Gkmm5TL6SvBOzvdTDK-OtIE4FAMpHnvUG3Yv/exec";
 
 let currentUser = "";
 let ticketCount = 0;
@@ -225,7 +227,9 @@ function deleteEntry(){
 
 // 長押し削除
 function startDeleteHold(){
-  deleteAccount();
+  deleteHoldTimer = setTimeout(()=>{
+    deleteAccount();
+  }, 3000);
 }
 function cancelDeleteHold(){
   clearTimeout(deleteHoldTimer);
