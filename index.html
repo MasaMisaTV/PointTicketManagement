@@ -67,6 +67,14 @@ th,td { border:1px solid #ccc; padding:6px; text-align:center; }
     <label>削除する日付:</label>
     <input type="date" id="deleteDate">
     <button onclick="deleteEntry()">× 記録を削除</button>
+    <hr>
+    <button id="deleteBtn"
+      onmousedown="startDeleteHold()"
+      onmouseup="cancelDeleteHold()"
+      onmouseleave="cancelDeleteHold()"
+      style="background:#d9534f;">
+      🗑 アカウント削除（3秒長押し）
+    </button>
   </div>
 </div>
 
@@ -79,6 +87,7 @@ const apiUrl = "https://script.google.com/macros/s/AKfycbz4jx06-o-_gwy3fRXTZIJ1p
 let currentUser = "";
 let ticketCount = 0;
 let history = [];
+let deleteHoldTimer;
 
 function getTodayJST(){
   const now = new Date();
@@ -214,9 +223,18 @@ function deleteEntry(){
   saveData();
 }
 
+// 長押し削除
+function startDeleteHold(){
+  deleteHoldTimer = setTimeout(()=>{
+    deleteAccount();
+  }, 3000);
+}
+function cancelDeleteHold(){
+  clearTimeout(deleteHoldTimer);
+}
+
 function deleteAccount(){
   if(!currentUser) return;
-  if(!confirm("本当にアカウントを削除しますか？")) return;
   fetch(apiUrl + "?user=" + encodeURIComponent(currentUser) + "&mode=delete",{
     method:"POST",
     body:""
